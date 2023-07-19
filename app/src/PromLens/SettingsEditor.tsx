@@ -1,6 +1,6 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
-import { Button, Collapse, Form, Card, Row, Col } from 'react-bootstrap';
+import { Button, Collapse, Form, Card, Row, Col, InputGroup } from 'react-bootstrap';
 import { FaTimes } from 'react-icons/fa';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
@@ -13,6 +13,7 @@ export interface Settings {
   enableHighlighting: boolean;
   enableAutocomplete: boolean;
   enableLinter: boolean;
+  enableSigv4: boolean;
 }
 
 export const SettingsContext = React.createContext<Settings>({
@@ -24,6 +25,7 @@ export const SettingsContext = React.createContext<Settings>({
   enableHighlighting: true,
   enableAutocomplete: true,
   enableLinter: true,
+  enableSigv4: false,
 });
 
 export interface SettingsEditorProps {
@@ -31,6 +33,109 @@ export interface SettingsEditorProps {
   onChange: (settings: Settings) => void;
   hide: () => void;
 }
+
+interface SettingsProps {
+  settings: Settings;
+}
+
+interface SetSettingsProps {
+  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
+}
+
+interface SetConfigVisibleProps {
+  setConfigVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const SigV4Component: FC<SettingsProps & SetSettingsProps & SetConfigVisibleProps> = ({
+  settings,
+  setSettings,
+  setConfigVisible,
+}) => {
+  const handleBrowserRefresh = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSettings({ ...settings, enableSigv4: e.target.checked });
+    setConfigVisible(e.target.checked);
+  };
+
+  return (
+    <div style={{ marginTop: '1rem' }}>
+      <Row>
+        <Col xs={4}>
+          <Form.Label style={{ fontSize: '.875rem' }}>Access Key:</Form.Label>
+        </Col>
+        <Col xs={8}>
+          <InputGroup size="sm" className="mb-2">
+            <Form.Control
+              placeholder="Access Key"
+              aria-label="AccessKey"
+              aria-describedby="basic-addon1"
+              as="textarea"
+              rows={1}
+              style={{ minHeight: 'calc(1.5em + 0.5rem + 2px)' }}
+              onChange={handleBrowserRefresh}
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs={4}>
+          <Form.Label style={{ fontSize: '.875rem' }}>Secret Key:</Form.Label>
+        </Col>
+        <Col xs={8}>
+          <InputGroup size="sm" className="mb-2">
+            <Form.Control
+              placeholder="Secret Key"
+              aria-label="SecretKey"
+              aria-describedby="basic-addon1"
+              as="textarea"
+              rows={1}
+              style={{ minHeight: 'calc(1.5em + 0.5rem + 2px)' }}
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs={4}>
+          <Form.Label style={{ fontSize: '.875rem' }}>AWS Region:</Form.Label>
+        </Col>
+        <Col xs={8}>
+          <InputGroup size="sm" className="mb-2">
+            <Form.Control placeholder="AWS Region" aria-label="AWSRegion" aria-describedby="basic-addon1" />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs={4}>
+          <Form.Label style={{ fontSize: '.875rem' }}>Service Name:</Form.Label>
+        </Col>
+        <Col xs={8}>
+          <InputGroup size="sm" className="mb-2">
+            <Form.Control placeholder="Service Name" aria-label="ServiceName" aria-describedby="basic-addon1" />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs={4}>
+          <Form.Label style={{ fontSize: '.875rem' }}>Session Token:</Form.Label>
+        </Col>
+        <Col xs={8}>
+          <InputGroup size="sm" className="mb-2">
+            <Form.Control
+              placeholder="Session Token"
+              aria-label="SessionToken"
+              aria-describedby="basic-addon1"
+              as="textarea"
+              rows={1}
+              // onClick={handleControlClick}
+              // onFocus={handleControlClick}
+              // onBlur={handleControlClick}
+              style={{ minHeight: 'calc(1.5em + 0.5rem + 2px)' }}
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+    </div>
+  );
+};
 
 const SettingsEditor: FC<SettingsEditorProps> = ({ onChange, shown, hide }) => {
   const [settings, setSettings] = useLocalStorage<Settings>('promlens.settings', {
@@ -42,6 +147,7 @@ const SettingsEditor: FC<SettingsEditorProps> = ({ onChange, shown, hide }) => {
     enableHighlighting: true,
     enableAutocomplete: true,
     enableLinter: true,
+    enableSigv4: false,
   });
 
   // The three editor flags were introduced together. If one of them is missing in the
@@ -68,6 +174,13 @@ const SettingsEditor: FC<SettingsEditorProps> = ({ onChange, shown, hide }) => {
   useEffect(() => {
     onChange(settings);
   }, [settings, onChange]);
+
+  const [configVisible, setConfigVisible] = useState(settings.enableSigv4);
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSettings({ ...settings, enableSigv4: e.target.checked });
+    setConfigVisible(e.target.checked);
+  };
 
   // TODO: Add node evaluation options:
   //   - manual eval
@@ -175,6 +288,22 @@ const SettingsEditor: FC<SettingsEditorProps> = ({ onChange, shown, hide }) => {
                   }
                 />
               </Form.Group>
+            </Col>
+            <Col>
+              <Form.Label>Authentication options:</Form.Label>
+              <Form.Group controlId="display-per-node" style={{ marginBottom: 0 }}>
+                <Form.Check
+                  custom
+                  type="checkbox"
+                  id="enable-sigv4"
+                  label="Enable SigV4"
+                  checked={settings.enableSigv4}
+                  onChange={handleCheckboxChange}
+                />
+              </Form.Group>
+              {configVisible && (
+                <SigV4Component settings={settings} setSettings={setSettings} setConfigVisible={setConfigVisible} />
+              )}
             </Col>
           </Row>
         </Card.Body>

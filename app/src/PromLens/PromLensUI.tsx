@@ -50,6 +50,7 @@ const PromLens: FC<PromLensUIStateProps & PromLensUIOwnProps & PathPrefixProps> 
     enableHighlighting: true,
     enableAutocomplete: true,
     enableLinter: true,
+    enableSigv4: false,
   });
 
   return (
